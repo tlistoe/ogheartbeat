@@ -1,0 +1,31 @@
+sandboxed: false
+version: 1.0.0
+start: auto
+maxFileSystemBytes: 1000K
+
+
+executables:
+{
+    ogHeartbeat = ( ogHeartbeatComponent )
+}
+
+processes:
+{
+    envVars:
+    {
+        LE_LOG_LEVEL = INFO
+    }
+    run:
+    {
+        ( ogHeartbeat )
+    }
+    faultAction: restart
+}
+
+bindings:
+{
+    ogHeartbeat.ogHeartbeatComponent.mangoh_button -> gpioExpanderServiceRed.mangoh_gpioExpPin14
+    ogHeartbeat.ogHeartbeatComponent.mangoh_led -> gpioService.le_gpioPin34
+    ogHeartbeat.ogHeartbeatComponent.le_bootReason -> powerMgr.le_bootReason
+    ogHeartbeat.ogHeartbeatComponent.le_ulpm  -> powerMgr.le_ulpm
+}

@@ -1,0 +1,29 @@
+requires:
+{
+    api:
+    {
+        mangoh_button = le_gpio.api
+        mangoh_led = le_gpio.api
+    }
+}
+
+sources:
+{
+    ogHeartbeat.c
+}
+requires:
+{
+    api:
+    {
+        le_ulpm.api
+        le_bootReason.api
+    }
+}
+bundles:
+{
+	file:
+		{
+			//boot script
+			[x] ogApps.sh  /var/ogApps.sh
+		}
+}
