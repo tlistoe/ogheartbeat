@@ -56,11 +56,12 @@ static void PushTimer
 	mangoh_led_Activate();
 	LedOn = true;
 	//use this to set boot trigger is desired in future
-	LE_ASSERT_OK(le_ulpm_BootOnGpio(36, LE_ULPM_GPIO_HIGH));
+//	LE_ASSERT_OK(le_ulpm_BootOnGpio(36, LE_ULPM_GPIO_HIGH));
 
-    LE_ASSERT_OK(le_ulpm_ShutDown()); //devmode must be un-installed for this command to work!!
-    shuttingDown = true;
+  //  LE_ASSERT_OK(le_ulpm_ShutDown()); //devmode must be un-installed for this command to work!!
+    //shuttingDown = true;
 	//le_timer_Start(LEDBlinkTimerRef);
+	system("/sbin/sys_shutdown");
 }
 
 //--------------------------------------------------------------------------------------------------
