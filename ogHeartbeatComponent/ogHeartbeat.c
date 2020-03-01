@@ -116,8 +116,21 @@ static void PushButtonHandler
 				{
 					//start apps
 					int systemResult;
+					time_t     now;
+					struct tm  ts;
+					char timestamp[80] = {0};
+					char systemCommand[300] = {0};
+					
+					time(&now);
+					
+					ts = *localtime(&now);
+					strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H-%M-%S", &ts);
+					
+					sprintf(systemCommand, "echo %s > /mnt/userrw/sdcard/lastStartTime.txt", timestamp);
+					systemResult = system(systemCommand);
 
 					systemResult = system("/legato/systems/current/apps/ogHeartbeat/read-only/var/ogApps.sh start");
+					
 					// Return value of -1 means that the fork() has failed (see man system).
 					if (0 == WEXITSTATUS(systemResult))
 					{
