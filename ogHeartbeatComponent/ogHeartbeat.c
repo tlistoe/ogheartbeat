@@ -14,18 +14,20 @@
 //#include "le_limit_interface.h" cant get this working, switching to shell script
 //#include "le_appCtrl_common.h"
 
-#define PUSH_TIMER_IN_MS (3000)
+#define PUSH_TIMER_IN_MS (1000)
 //#define LED_BLINK_TIMER_IN_MS (250)
 
 static bool LedOn;
 static bool appsRunning;
 static bool shuttingDown;
 static le_timer_Ref_t PushTimerRef;
+int secondCount;
 //static le_timer_Ref_t LEDBlinkTimerRef;
 
 //--------------------------------------------------------------------------------------------------
 /**
- * initiate shutdown sequence when the timer expires, i.e. the pushbutton has been held down for PUSH_TIMER_IN_MS
+ * PushTimer is invoked every PUSH_TIMER_IN_MS (1000 right now) and will increment secondCount by one each time
+ * initiate shutdown sequence when the timer "ticks" three times, i.e. the pushbutton has been held down for 3xPUSH_TIMER_IN_MS
  *  - make LED blink once shutdown is initiated
  */
 //--------------------------------------------------------------------------------------------------
@@ -34,65 +36,66 @@ static void PushTimer
     le_timer_Ref_t PushTimerRef
 )
 {
-	le_timer_Stop(PushTimerRef);
-	mangoh_led_Activate();
-	LedOn = true;	    
-	usleep(250000);
-	mangoh_led_Deactivate();
-	LedOn = false;
-	usleep(250000);
-	mangoh_led_Activate();
-	LedOn = true;
-	usleep(250000);
-	mangoh_led_Deactivate();
-	LedOn = false;
-	usleep(250000);
-	mangoh_led_Activate();
-	LedOn = true;
-	usleep(250000);
-	mangoh_led_Deactivate();
-	LedOn = false;
-	usleep(250000);
-	mangoh_led_Activate();
-	LedOn = true;
-	//use this to set boot trigger is desired in future
-//	LE_ASSERT_OK(le_ulpm_BootOnGpio(36, LE_ULPM_GPIO_HIGH));
+	//count up by one each time the PushTimer is triggered
+	secondCount++;
+	
+	switch (secondCount)
+	{
+	case 1:
+		//blink light 2x quickly to indicate that releasing the the button now will start apps
+			mangoh_led_Activate();
+			LedOn = true;	    
+			usleep(125000);
+			mangoh_led_Deactivate();
+			LedOn = false;
+			usleep(125000);
+			mangoh_led_Activate();
+			LedOn = true;
+			usleep(125000);
+			mangoh_led_Deactivate();
+			LedOn = false;
+	case 3:
+		//blink light and shutdown
+			le_timer_Stop(PushTimerRef);
+			shuttingDown = true;
+			mangoh_led_Activate();
+			LedOn = true;	    
+			usleep(250000);
+			mangoh_led_Deactivate();
+			LedOn = false;
+			usleep(250000);
+			mangoh_led_Activate();
+			LedOn = true;
+			usleep(250000);
+			mangoh_led_Deactivate();
+			LedOn = false;
+			usleep(250000);
+			mangoh_led_Activate();
+			LedOn = true;
+			usleep(250000);
+			mangoh_led_Deactivate();
+			LedOn = false;
+			usleep(250000);
+			mangoh_led_Activate();
+			LedOn = true;
+			//use this to set boot trigger is desired in future
+			//	LE_ASSERT_OK(le_ulpm_BootOnGpio(36, LE_ULPM_GPIO_HIGH));
 
-  //  LE_ASSERT_OK(le_ulpm_ShutDown()); //devmode must be un-installed for this command to work!!
-    //shuttingDown = true;
-	//le_timer_Start(LEDBlinkTimerRef);
-	system("/sbin/sys_shutdown");
+			//  LE_ASSERT_OK(le_ulpm_ShutDown()); //devmode must be un-installed for this command to work!!
+			//shuttingDown = true;
+			//le_timer_Start(LEDBlinkTimerRef);
+			system("/sbin/sys_shutdown");
+	default:
+	//nothing
+	;
+	}
+	
 }
 
 //--------------------------------------------------------------------------------------------------
 /**
- * initiate shutdown sequence when the timer expires, i.e. the pushbutton has been held down for PUSH_TIMER_IN_MS
- *  - make LED blink once shutdown is initiated
- */
-//--------------------------------------------------------------------------------------------------
-/*
-static void LEDBlinkTimer
-(
-    le_timer_Ref_t LEDTimerRef
-)
-{
-
-    if (LedOn)
-    {
-        mangoh_led_Deactivate();
-        LedOn = false;
-    }
-    else
-    {
-        mangoh_led_Activate();
-        LedOn = true;
-    }
-}*/
-
-//--------------------------------------------------------------------------------------------------
-/**
  * Turn the LED on and disable the timer while the button is pressed. When the  button is released,
- * turn off the LED and start the timer.
+ * turn off the LED and start the timer. if it is released after 1 second it will start of stop the apps
  */
 //--------------------------------------------------------------------------------------------------
 static void PushButtonHandler
@@ -102,19 +105,19 @@ static void PushButtonHandler
 )
 {
 	if (!shuttingDown){
-		if (state)
+		if (state) //button pushed
 		{
 			LE_DEBUG("Starting Push Button Timer");
 			le_timer_Start(PushTimerRef);
 		}
-		else
+		else //button released
 		{
+			if (secondCount >= 1) //start or stop apps
+			{
 			LE_DEBUG("Stopping push button timer");
 			le_timer_Stop(PushTimerRef);
-
-				if (!appsRunning)
+				if (!appsRunning) //start apps
 				{
-					//start apps
 					int systemResult;
 					time_t     now;
 					struct tm  ts;
@@ -145,9 +148,8 @@ static void PushButtonHandler
 					}
 
 				}
-				else
+				else // stop apps
 				{
-					//stop apps
 					int systemResult;
 
 					systemResult = system("/legato/systems/current/apps/ogHeartbeat/read-only/var/ogApps.sh stop");
@@ -163,11 +165,14 @@ static void PushButtonHandler
 					{
 						LE_ERROR("Error stopping apps Failed: (%d)", systemResult);
 					}			
-
 				}
+			}
+			//reset second count to 0 when button released
+			secondCount = 0;
 		}
     }
 }
+
 
 //--------------------------------------------------------------------------------------------------
 /**
@@ -193,6 +198,7 @@ COMPONENT_INIT
 {
 	appsRunning = false;
 	shuttingDown = false;
+	secondCount = 0;
     PushTimerRef = le_timer_Create("Push Button Timer");
     le_timer_SetMsInterval(PushTimerRef, PUSH_TIMER_IN_MS);
     le_timer_SetRepeat(PushTimerRef, 0);
