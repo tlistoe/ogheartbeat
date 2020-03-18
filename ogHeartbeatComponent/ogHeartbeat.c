@@ -1,14 +1,3 @@
-/**
- * @file
- *
- * Blinks the user controlled LED at 1Hz. If the push-button is pressed, the LED
- * will remain on until the push-button is released.
- *
- * <HR>
- *
- * Copyright (C) Sierra Wireless, Inc. Use of this work is subject to license.
- */
-
 #include "legato.h"
 #include "interfaces.h"
 //#include "le_limit_interface.h" cant get this working, switching to shell script
@@ -16,14 +5,33 @@
 
 #define PUSH_TIMER_IN_MS (1000)
 //#define LED_BLINK_TIMER_IN_MS (250)
+//#define LED_BLINK_TIMER_IN_MS (250)
 
 static bool LedOn;
 static bool appsRunning;
 static bool shuttingDown;
 static le_timer_Ref_t PushTimerRef;
+static le_timer_Ref_t BlinkTimerRef;
 int secondCount;
+int blinkCount;
 //static le_timer_Ref_t LEDBlinkTimerRef;
 
+
+static void BlinkTimer
+(
+	le_timer_Ref_t BlinkTimerRef
+)
+{
+		if(LedOn)
+		{
+			mangoh_led_Deactivate();
+			LedOn = false;
+		}else
+		{
+			mangoh_led_Activate();
+			LedOn = true;
+		}
+}
 //--------------------------------------------------------------------------------------------------
 /**
  * PushTimer is invoked every PUSH_TIMER_IN_MS (1000 right now) and will increment secondCount by one each time
@@ -36,48 +44,22 @@ static void PushTimer
     le_timer_Ref_t PushTimerRef
 )
 {
+	LE_INFO("PushTimer Invoked");
 	//count up by one each time the PushTimer is triggered
-	secondCount++;
-	
-	switch (secondCount)
-	{
-	case 1:
-		//blink light 2x quickly to indicate that releasing the the button now will start apps
-			mangoh_led_Activate();
-			LedOn = true;	    
-			usleep(125000);
-			mangoh_led_Deactivate();
-			LedOn = false;
-			usleep(125000);
-			mangoh_led_Activate();
-			LedOn = true;
-			usleep(125000);
-			mangoh_led_Deactivate();
-			LedOn = false;
-	case 3:
-		//blink light and shutdown
+	//if(mangoh_button_Read())
+	//{
+		secondCount++;
+		
+		if (secondCount == 1)
+		{
+			LE_INFO("Second Count 1");
+		}
+		if (secondCount == 3) 
+		{
+			LE_INFO("Second count 3");
+			//blink light and shutdown
 			le_timer_Stop(PushTimerRef);
 			shuttingDown = true;
-			mangoh_led_Activate();
-			LedOn = true;	    
-			usleep(250000);
-			mangoh_led_Deactivate();
-			LedOn = false;
-			usleep(250000);
-			mangoh_led_Activate();
-			LedOn = true;
-			usleep(250000);
-			mangoh_led_Deactivate();
-			LedOn = false;
-			usleep(250000);
-			mangoh_led_Activate();
-			LedOn = true;
-			usleep(250000);
-			mangoh_led_Deactivate();
-			LedOn = false;
-			usleep(250000);
-			mangoh_led_Activate();
-			LedOn = true;
 			//use this to set boot trigger is desired in future
 			//	LE_ASSERT_OK(le_ulpm_BootOnGpio(36, LE_ULPM_GPIO_HIGH));
 
@@ -85,12 +67,10 @@ static void PushTimer
 			//shuttingDown = true;
 			//le_timer_Start(LEDBlinkTimerRef);
 			system("/sbin/sys_shutdown");
-	default:
-	//nothing
-	;
-	}
+		}
 	
 }
+
 
 //--------------------------------------------------------------------------------------------------
 /**
@@ -107,15 +87,15 @@ static void PushButtonHandler
 	if (!shuttingDown){
 		if (state) //button pushed
 		{
-			LE_DEBUG("Starting Push Button Timer");
+			LE_INFO("Starting Push Button Timer");
 			le_timer_Start(PushTimerRef);
 		}
 		else //button released
 		{
+			LE_INFO("Stopping push button timer");
+			le_timer_Stop(PushTimerRef);
 			if (secondCount >= 1) //start or stop apps
 			{
-			LE_DEBUG("Stopping push button timer");
-			le_timer_Stop(PushTimerRef);
 				if (!appsRunning) //start apps
 				{
 					int systemResult;
@@ -138,9 +118,8 @@ static void PushButtonHandler
 					if (0 == WEXITSTATUS(systemResult))
 					{
 						LE_INFO("Starting Apps Success");
-						mangoh_led_Activate();
-						LedOn = true;
 						appsRunning = true;
+						le_timer_Start(BlinkTimerRef);	
 					}
 					else
 					{
@@ -157,9 +136,11 @@ static void PushButtonHandler
 					if (0 == WEXITSTATUS(systemResult))
 					{
 						LE_INFO("Stopping Apps Success");
+						appsRunning = false;
+						le_timer_Stop(BlinkTimerRef);
 						mangoh_led_Deactivate();
 						LedOn = false;
-						appsRunning = false;
+			
 					}
 					else
 					{
@@ -203,26 +184,18 @@ COMPONENT_INIT
     le_timer_SetMsInterval(PushTimerRef, PUSH_TIMER_IN_MS);
     le_timer_SetRepeat(PushTimerRef, 0);
     le_timer_SetHandler(PushTimerRef, PushTimer);
-
+    
+    BlinkTimerRef = le_timer_Create("Blink Timer");
+    le_timer_SetMsInterval(BlinkTimerRef, 600);
+    le_timer_SetRepeat(BlinkTimerRef, 0);
+    le_timer_SetHandler(BlinkTimerRef, BlinkTimer);
+    
+   
     ConfigureGpios();
     
-	mangoh_led_Activate();
-	LedOn = true;	    
-	usleep(500000);
-	mangoh_led_Deactivate();
-	LedOn = false;
-	usleep(500000);
-	mangoh_led_Activate();
+    mangoh_led_Activate();
 	LedOn = true;
-	usleep(500000);
-	mangoh_led_Deactivate();
-	LedOn = false;
-	usleep(500000);
-	mangoh_led_Activate();
-	LedOn = true;
-	usleep(500000);
-	mangoh_led_Deactivate();
-	LedOn = false;
+    
 
 
 }
