@@ -1,6 +1,6 @@
 sandboxed: false
 version: 1.0.0
-start: auto
+start: manual
 maxFileSystemBytes: 1000K
 
 
@@ -24,8 +24,5 @@ processes:
 
 bindings:
 {
-    ogHeartbeat.ogHeartbeatComponent.mangoh_button -> gpioExpanderServiceRed.mangoh_gpioExpPin14
-    ogHeartbeat.ogHeartbeatComponent.mangoh_led -> gpioService.le_gpioPin34
-    ogHeartbeat.ogHeartbeatComponent.le_bootReason -> powerMgr.le_bootReason
-    ogHeartbeat.ogHeartbeatComponent.le_ulpm  -> powerMgr.le_ulpm
+    ogHeartbeat.ogHeartbeatComponent.mangoh_button -> gpioService.le_gpioPin25
 }
