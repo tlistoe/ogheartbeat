@@ -11,12 +11,16 @@ case "$1" in
         #turn on tri green light, red off
         echo 1 > /sys/devices/platform/expander.0/tri_led_grn
         echo 0 > /sys/devices/platform/expander.0/tri_led_red
-        
+        else 
+        echo 1 > /sys/devices/platform/expander.0/tri_led_red
         fi
+        
         if /legato/systems/current/bin/app start gnssLogger ; then
         #turn on tri blue light, red off
         echo 1 > /sys/devices/platform/expander.0/tri_led_blu
         echo 0 > /sys/devices/platform/expander.0/tri_led_red
+        else
+        echo 1 > /sys/devices/platform/expander.0/tri_led_red
         fi
         /legato/systems/current/bin/app start rfidTemp
         ;;
