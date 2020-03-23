@@ -1,0 +1,15 @@
+USETYPES le_limit.api;
+
+
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Display Text on specified line
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t Display
+(
+    string          message[64]         IN,     //only display 22 characters per line
+    uint8           line                IN      //line number : 0 - 3
+);
+
