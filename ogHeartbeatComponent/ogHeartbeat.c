@@ -56,6 +56,8 @@ static void AppTimer
 		char timestamp[80] = {0};
 		char systemCommand[300] = {0};
 		
+		piOled_Display("Starting Apps...", 0);
+		
 		time(&now);
 		
 		ts = *localtime(&now);
@@ -72,11 +74,13 @@ static void AppTimer
 		if (0 == WEXITSTATUS(systemResult))
 		{
 			LE_INFO("Starting Apps Success");
+			piOled_Display("Apps Started!", 0);
 			appsRunning = true;
 		}
 		else
 		{
 			LE_ERROR("Error starting apps Failed: (%d)", systemResult);
+			piOled_Display("Error starting apps", 0);
 			le_timer_Stop(BlinkTimerRef);	
 			//mangoh_led_Deactivate();
 			LedOn = false;
@@ -93,6 +97,10 @@ static void AppTimer
 		// Return value of -1 means that the fork() has failed (see man system).
 		if (0 == WEXITSTATUS(systemResult))
 		{
+			piOled_Display("Apps Stopped", 0);
+			piOled_Display(" ", 1);
+			piOled_Display(" ", 2);
+			piOled_Display(" ", 3);
 			LE_INFO("Stopping Apps Success");
 			appsRunning = false;
 			//mangoh_led_Activate();
@@ -100,6 +108,10 @@ static void AppTimer
 		}
 		else
 		{
+			piOled_Display("Error stopping apps", 0);
+			piOled_Display(" ", 1);
+			piOled_Display(" ", 2);
+			piOled_Display(" ", 3);
 			LE_ERROR("Error stopping apps Failed: (%d)", systemResult);
 			//mangoh_led_Deactivate();
 			LedOn = false;

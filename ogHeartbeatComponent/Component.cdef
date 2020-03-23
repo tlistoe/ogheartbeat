@@ -3,6 +3,7 @@ requires:
     api:
     {
         mangoh_button = le_gpio.api
+        piOled.api
     }
 }
 

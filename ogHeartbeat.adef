@@ -25,4 +25,5 @@ processes:
 bindings:
 {
     ogHeartbeat.ogHeartbeatComponent.mangoh_button -> gpioService.le_gpioPin25
+    ogHeartbeat.ogHeartbeatComponent.piOled -> piOled.piOled
 }
