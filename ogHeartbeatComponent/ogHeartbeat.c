@@ -58,6 +58,42 @@ static void AppTimer
 		
 		piOled_Display("Starting Apps...", 0);
 		
+		sprintf(systemCommand, "lastStartTime=$(cat /mnt/userrw/sdcard/lastStartTime.txt); mkdir /mnt/userrw/sdcard/\"$lastStartTime\"; mv /mnt/userrw/sdcard/imuLog.txt /mnt/userrw/sdcard/\"$lastStartTime\"/\"$lastStartTime\"_imuLog.txt");
+		systemResult = system(systemCommand);
+		// Return value of -1 means that the fork() has failed (see man system).
+		if (0 == WEXITSTATUS(systemResult))
+		{
+			LE_INFO("Succesfully backed up imu log file: sys> %s", systemCommand);
+		}
+		else
+		{
+			LE_ERROR("Error imu log file backup Failed: (%d), sys> %s", systemResult, systemCommand);
+		}
+		
+		sprintf(systemCommand, "lastStartTime=$(cat /mnt/userrw/sdcard/lastStartTime.txt); mkdir /mnt/userrw/sdcard/\"$lastStartTime\"; mv /mnt/userrw/sdcard/gnssLog.txt /mnt/userrw/sdcard/\"$lastStartTime\"/\"$lastStartTime\"_gnssLog.txt");
+		systemResult = system(systemCommand);
+		// Return value of -1 means that the fork() has failed (see man system).
+		if (0 == WEXITSTATUS(systemResult))
+		{
+			LE_INFO("Succesfully backed up gnss log file: sys> %s", systemCommand);
+		}
+		else
+		{
+			LE_ERROR("Error gnss log file backup Failed: (%d), sys> %s", systemResult, systemCommand);
+		}
+    
+		sprintf(systemCommand, "lastStartTime=$(cat /mnt/userrw/sdcard/lastStartTime.txt); mkdir /mnt/userrw/sdcard/\"$lastStartTime\"; mv /mnt/userrw/sdcard/rfidLog.txt /mnt/userrw/sdcard/\"$lastStartTime\"/\"$lastStartTime\"_rfidLog.txt");
+		systemResult = system(systemCommand);
+		// Return value of -1 means that the fork() has failed (see man system).
+		if (0 == WEXITSTATUS(systemResult))
+		{
+			LE_INFO("Succesfully backed up rfid log file: sys> %s", systemCommand);
+		}
+		else
+		{
+			LE_ERROR("Error rfid log file backup Failed: (%d), sys> %s", systemResult, systemCommand);
+		
+		}
 		time(&now);
 		
 		ts = *localtime(&now);
